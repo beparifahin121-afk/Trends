@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rooms</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner">
+<a class="brand" href="index.html">Farheen Hostel Management</a>
+<nav><a href="index.html">Home</a><a href="list.html">Residents</a><a href="rooms.html" class="active">Rooms</a><a href="listOne.html">Find Resident</a><a href="insert.html">Insert Resident</a><a href="update.html">Update Resident</a><a href="delete.html">Check-out</a></nav>
+</div></header>
+<main class="page">
+<div class="page-head">
+<div>
+<h1>Room occupancy</h1>
+<p>See which rooms are full, which have vacant beds and who is staying where.</p>
+</div>
+<img src="images/rank.svg" alt="">
+</div>
+<div id="msg" class="msg"></div>
+<div class="stats" id="stats"></div>
+<div class="card">
+<div class="toolbar">
+<div class="field" style="margin:0;max-width:220px"><label for="filter">Show</label>
+<select id="filter" onchange="render()">
+<option value="all">All rooms</option><option value="free">Rooms with vacancy</option><option value="full">Full rooms</option>
+</select></div>
+<button class="secondary" onclick="exportCsv()">Export CSV</button>
+</div>
+<div class="table-wrap"><table id="tbl">
+<thead><tr><th>Room</th><th>Beds</th><th>Occupied</th><th>Vacant</th><th>Status</th><th>Residents</th></tr></thead>
+<tbody></tbody></table></div>
+</div>
+</main>
+<footer>Farheen Hostel Management System</footer>
+<script src="hostel.js"></script>
+<script>
+let rows = [];
+Promise.all([api.config(), api.residents()]).then(([c, r]) => {
+  rows = c.rooms.map(x => {
+    const who = r.filter(p => p.room_no === x.room).map(p => p.resident_name);
+    return {room: x.room, beds: x.capacity, used: who.length, who: who};
+  });
+  render();
+}).catch(() => showMsg("Could not load rooms.", "err"));
+
+function status(x){ return x.used === 0 ? "Empty" : x.used >= x.beds ? "Full" : "Available"; }
+function badge(x){
+  const s = status(x);
+  return `<span class="badge ${s === "Full" ? "fail" : s === "Empty" ? "part" : "pass"}">${s}</span>`;
+}
+function shown(){
+  const f = document.getElementById("filter").value;
+  return rows.filter(x => f === "all" || (f === "full" ? x.used >= x.beds : x.used < x.beds));
+}
+function render(){
+  const list = shown();
+  document.querySelector("#tbl tbody").innerHTML = list.length ? list.map(x =>
+    `<tr><td><strong>${esc(x.room)}</strong></td><td>${x.beds}</td><td>${x.used}</td><td>${x.beds - x.used}</td>
+     <td>${badge(x)}</td><td>${x.who.length ? esc(x.who.join(", ")) : "-"}</td></tr>`).join("")
+    : '<tr><td colspan="6" class="empty">No rooms match this filter.</td></tr>';
+  const beds = rows.reduce((t, x) => t + x.beds, 0), used = rows.reduce((t, x) => t + x.used, 0);
+  document.getElementById("stats").innerHTML =
+    `<div class="stat"><div class="num">${rows.length}</div><div class="label">Rooms</div></div>
+     <div class="stat"><div class="num">${used}</div><div class="label">Beds occupied</div><div class="sub">of ${beds}</div></div>
+     <div class="stat"><div class="num">${beds - used}</div><div class="label">Vacant beds</div></div>
+     <div class="stat"><div class="num">${beds ? Math.round(used / beds * 100) : 0}%</div><div class="label">Occupancy</div></div>`;
+}
+function exportCsv(){
+  downloadCsv("rooms.csv", ["Room", "Beds", "Occupied", "Vacant", "Status", "Residents"],
+    shown().map(x => [x.room, x.beds, x.used, x.beds - x.used, status(x), x.who.join("; ")]));
+}
+</script>
+</body>
+</html>

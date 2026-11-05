@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Update Resident</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner">
+<a class="brand" href="index.html">Farheen Hostel Management</a>
+<nav><a href="index.html">Home</a><a href="list.html">Residents</a><a href="rooms.html">Rooms</a><a href="listOne.html">Find Resident</a><a href="insert.html">Insert Resident</a><a href="update.html" class="active">Update Resident</a><a href="delete.html">Check-out</a></nav>
+</div></header>
+<main class="page">
+<div class="page-head">
+<div>
+<h1>Update resident</h1>
+<p>Pick a resident from the dropdown or click a row, then edit the details.</p>
+</div>
+<img src="images/update.svg" alt="">
+</div>
+<div class="card">
+<h2>Edit details</h2>
+<div id="msg" class="msg"></div>
+<div class="field"><label for="sno">Resident</label>
+<select id="sno" onchange="selectResident(this.value)"></select></div>
+<div class="field"><label for="name">Resident name</label><input type="text" id="name"></div>
+<div class="field"><label for="phone">Phone number</label><input type="tel" id="phone" maxlength="10"></div>
+<div class="field"><label for="room">Room</label><select id="room"></select></div>
+<div class="field"><label for="paid">Fee paid <span id="feeHint"></span></label><input type="number" id="paid"></div>
+<div class="actions"><button onclick="updateResident()">Update resident</button>
+<button class="secondary" onclick="location.href='index.html'">Home page</button></div>
+</div>
+<div class="card">
+<h2>Current residents</h2>
+<p class="hint">Click a row to load that resident into the form.</p>
+<div class="table-wrap"><table id="tbl" class="clickable">
+<thead><tr><th>Resident ID</th><th>Name</th><th>Room</th><th>Fee Paid</th></tr></thead>
+<tbody></tbody></table></div>
+</div>
+</main>
+<footer>Farheen Hostel Management System</footer>
+<script src="hostel.js"></script>
+<script>
+let residents = [], cfg;
+const $ = id => document.getElementById(id);
+load();
+
+function load(keepId){
+  Promise.all([api.config(), api.residents()]).then(([c, r]) => {
+    cfg = c; residents = r; $("feeHint").textContent = "(yearly fee " + money(c.fee) + ")";
+    fillResidents($("sno"), r, keepId); fillRooms($("room"), c, r);
+    selectResident(keepId || "");
+  }).catch(() => showMsg("Could not load residents.", "err"));
+}
+
+function drawTable(sel){
+  $("tbl").querySelector("tbody").innerHTML = residents.length ? residents.map(s =>
+    `<tr data-id="${esc(s.resident_id)}" class="${String(s.resident_id) === String(sel) ? "selected" : ""}" onclick="selectResident(this.dataset.id)">
+     <td>${esc(s.resident_id)}</td><td>${esc(s.resident_name)}</td><td>${esc(s.room_no)}</td><td>${money(s.fee_paid)}</td></tr>`).join("")
+    : '<tr><td colspan="4" class="empty">No residents found.</td></tr>';
+}
+
+function selectResident(id){
+  $("sno").value = id;
+  const s = residents.find(x => String(x.resident_id) === String(id));
+  $("name").value = s ? s.resident_name : ""; $("phone").value = s ? s.phone : ""; $("paid").value = s ? s.fee_paid : "";
+  fillRooms($("room"), cfg, residents, s ? s.room_no : "", id);
+  drawTable(id);
+}
+
+function updateResident(){
+  const id = $("sno").value;
+  const body = {name: $("name").value.trim(), phone: $("phone").value.trim(), room: $("room").value, paid: $("paid").value};
+  if (!id){ showMsg("Please select a resident first.", "err"); return; }
+  if (!body.name || !body.phone || !body.room || body.paid === ""){ showMsg("Please fill in all the fields.", "err"); return; }
+  fetch("/residents/" + encodeURIComponent(id), {method: "PUT", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)})
+  .then(checkOk).then(m => { showMsg(m, "ok"); load(id); }).catch(e => showMsg(e.message, "err"));
+}
+</script>
+</body>
+</html>

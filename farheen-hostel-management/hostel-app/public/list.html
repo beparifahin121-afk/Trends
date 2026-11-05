@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Residents</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner">
+<a class="brand" href="index.html">Farheen Hostel Management</a>
+<nav><a href="index.html">Home</a><a href="list.html" class="active">Residents</a><a href="rooms.html">Rooms</a><a href="listOne.html">Find Resident</a><a href="insert.html">Insert Resident</a><a href="update.html">Update Resident</a><a href="delete.html">Check-out</a></nav>
+</div></header>
+<main class="page">
+<div class="page-head">
+<div>
+<h1>List of residents</h1>
+<p>Search, sort and review every resident with their room and fee status.</p>
+</div>
+<img src="images/list.svg" alt="">
+</div>
+<div class="stats" id="stats"></div>
+<div class="card">
+<div id="msg" class="msg"></div>
+<div class="toolbar">
+<input type="search" id="q" placeholder="Search by ID, name, room or phone" oninput="render()">
+<div class="actions"><button onclick="load()">Refresh list</button>
+<button class="secondary" onclick="exportCsv()">Export CSV</button></div>
+</div>
+<div class="table-wrap"><table id="tbl">
+<thead><tr>
+<th class="sortable" data-key="resident_id" onclick="sortBy('resident_id')">Resident ID</th>
+<th class="sortable" data-key="resident_name" onclick="sortBy('resident_name')">Name</th>
+<th>Phone</th>
+<th class="sortable" data-key="room_no" onclick="sortBy('room_no')">Room</th>
+<th class="sortable" data-key="fee_paid" onclick="sortBy('fee_paid')">Fee Paid</th>
+<th>Balance</th><th>Status</th></tr></thead>
+<tbody></tbody></table></div>
+</div>
+</main>
+<footer>Farheen Hostel Management System</footer>
+<script src="hostel.js"></script>
+<script>
+let residents = [], fee = 0, sortKey = "resident_id", sortDir = 1;
+load();
+
+function load(){
+  Promise.all([api.config(), api.residents()]).then(([c, r]) => { fee = c.fee; residents = r; render(); })
+    .catch(() => showMsg("Could not load residents.", "err"));
+}
+function sortBy(k){ if (sortKey === k) sortDir = -sortDir; else { sortKey = k; sortDir = 1; } render(); }
+
+function visible(){
+  const q = document.getElementById("q").value.trim().toLowerCase();
+  return residents.filter(s => !q || [s.resident_id, s.resident_name, s.room_no, s.phone].some(v => String(v).toLowerCase().includes(q)))
+    .sort((a, b) => sortKey === "fee_paid" ? (a.fee_paid - b.fee_paid) * sortDir
+      : String(a[sortKey]).localeCompare(String(b[sortKey]), undefined, {numeric: true, sensitivity: "base"}) * sortDir);
+}
+
+function render(){
+  const rows = visible();
+  document.querySelector("#tbl tbody").innerHTML = rows.length ? rows.map(s =>
+    `<tr><td>${esc(s.resident_id)}</td><td>${esc(s.resident_name)}</td><td>${esc(s.phone)}</td><td>${esc(s.room_no)}</td>
+     <td>${money(s.fee_paid)}</td><td>${money(fee - s.fee_paid)}</td><td>${feeBadge(s.fee_paid, fee)}</td></tr>`).join("")
+    : `<tr><td colspan="7" class="empty">${residents.length ? "No residents match your search." : "No residents yet. Use Insert Resident to add one."}</td></tr>`;
+  document.querySelectorAll("th.sortable").forEach(th => {
+    th.classList.remove("asc", "desc");
+    if (th.dataset.key === sortKey) th.classList.add(sortDir === 1 ? "asc" : "desc");
+  });
+  const paid = residents.reduce((t, s) => t + Number(s.fee_paid), 0);
+  const full = residents.filter(s => feeStatus(s.fee_paid, fee) === "Paid").length;
+  document.getElementById("stats").innerHTML = residents.length ?
+    `<div class="stat"><div class="num">${residents.length}</div><div class="label">Residents</div></div>
+     <div class="stat"><div class="num">${money(paid)}</div><div class="label">Fee collected</div></div>
+     <div class="stat"><div class="num">${money(residents.length * fee - paid)}</div><div class="label">Fee pending</div></div>
+     <div class="stat"><div class="num">${full}</div><div class="label">Fully paid</div><div class="sub">of ${residents.length}</div></div>` : "";
+}
+
+function exportCsv(){
+  downloadCsv("residents.csv", ["Resident ID", "Name", "Phone", "Room", "Fee Paid", "Balance", "Status"],
+    visible().map(s => [s.resident_id, s.resident_name, s.phone, s.room_no, s.fee_paid, fee - s.fee_paid, feeStatus(s.fee_paid, fee)]));
+}
+</script>
+</body>
+</html>

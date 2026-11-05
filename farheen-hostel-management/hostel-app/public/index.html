@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Farheen Hostel Management</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner">
+<a class="brand" href="index.html">Farheen Hostel Management</a>
+<nav><a href="index.html" class="active">Home</a><a href="list.html">Residents</a><a href="rooms.html">Rooms</a><a href="listOne.html">Find Resident</a><a href="insert.html">Insert Resident</a><a href="update.html">Update Resident</a><a href="delete.html">Check-out</a></nav>
+</div></header>
+<main class="page">
+<div class="page-head">
+<div>
+<h1>Farheen Hostel Management</h1>
+<p>Check residents in and out, track rooms and manage hostel fees from one place.</p>
+</div>
+<img src="images/home.svg" alt="">
+</div>
+<div class="stats" id="stats"></div>
+<div class="grid"><a class="tile" href="list.html"><img src="images/list.svg" alt=""><div><strong>Residents</strong><span>See every resident with room and fee status.</span></div></a><a class="tile" href="rooms.html"><img src="images/rank.svg" alt=""><div><strong>Rooms</strong><span>Check occupancy and find vacant beds.</span></div></a><a class="tile" href="listOne.html"><img src="images/search.svg" alt=""><div><strong>Find resident</strong><span>Pick a resident to view their record.</span></div></a><a class="tile" href="insert.html"><img src="images/insert.svg" alt=""><div><strong>Insert Resident</strong><span>Add a new resident and allot a room.</span></div></a><a class="tile" href="update.html"><img src="images/update.svg" alt=""><div><strong>Update resident</strong><span>Change room, phone or fee paid.</span></div></a><a class="tile" href="delete.html"><img src="images/delete.svg" alt=""><div><strong>Check-out</strong><span>Remove a resident and free the bed.</span></div></a></div>
+</main>
+<footer>Farheen Hostel Management System</footer>
+<script src="hostel.js"></script>
+<script>
+Promise.all([api.config(), api.residents()]).then(([c, r]) => {
+  const beds = c.rooms.reduce((t, x) => t + x.capacity, 0);
+  const due = r.length * c.fee - r.reduce((t, x) => t + Number(x.fee_paid), 0);
+  document.getElementById("stats").innerHTML =
+    `<div class="stat"><div class="num">${r.length}</div><div class="label">Residents</div></div>
+     <div class="stat"><div class="num">${beds - r.length}</div><div class="label">Vacant beds</div><div class="sub">of ${beds}</div></div>
+     <div class="stat"><div class="num">${money(due)}</div><div class="label">Fee pending</div></div>`;
+}).catch(() => {});
+</script>
+</body>
+</html>

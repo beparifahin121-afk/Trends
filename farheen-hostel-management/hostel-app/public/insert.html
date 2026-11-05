@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Insert Resident</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner">
+<a class="brand" href="index.html">Farheen Hostel Management</a>
+<nav><a href="index.html">Home</a><a href="list.html">Residents</a><a href="rooms.html">Rooms</a><a href="listOne.html">Find Resident</a><a href="insert.html" class="active">Insert Resident</a><a href="update.html">Update Resident</a><a href="delete.html">Check-out</a></nav>
+</div></header>
+<main class="page">
+<div class="page-head">
+<div>
+<h1>Insert Resident</h1>
+<p>Enter the new resident's details, choose a room and save.</p>
+</div>
+<img src="images/insert.svg" alt="">
+</div>
+<div class="card">
+<div id="msg" class="msg"></div>
+<div class="field"><label for="sno">Resident ID</label><input type="text" id="sno"></div>
+<div class="field"><label for="name">Resident name</label><input type="text" id="name"></div>
+<div class="field"><label for="phone">Phone number</label><input type="tel" id="phone" maxlength="10"></div>
+<div class="field"><label for="room">Room</label><select id="room"></select></div>
+<div class="field"><label for="paid">Fee paid <span id="feeHint"></span></label><input type="number" id="paid" value="0"></div>
+<div class="actions"><button onclick="saveResident()">Insert resident</button>
+<button class="secondary" onclick="location.href='index.html'">Home page</button></div>
+</div>
+</main>
+<footer>Farheen Hostel Management System</footer>
+<script src="hostel.js"></script>
+<script>
+let cfg, residents = [];
+const $ = id => document.getElementById(id);
+function init(){
+  Promise.all([api.config(), api.residents()]).then(([c, r]) => {
+    cfg = c; residents = r; fillRooms($("room"), c, r);
+    $("feeHint").textContent = "(yearly fee " + money(c.fee) + ")";
+  }).catch(() => showMsg("Could not load rooms.", "err"));
+}
+init();
+
+function saveResident(){
+  const body = {sno: $("sno").value.trim(), name: $("name").value.trim(), phone: $("phone").value.trim(), room: $("room").value, paid: $("paid").value};
+  if (!body.sno || !body.name || !body.phone || !body.room || body.paid === ""){ showMsg("Please fill in all the fields.", "err"); return; }
+  if (Number(body.paid) < 0 || Number(body.paid) > cfg.fee){ showMsg("Fee paid must be between 0 and " + cfg.fee + ".", "err"); return; }
+  fetch("/residents", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)})
+  .then(checkOk)
+  .then(m => { showMsg(m, "ok"); ["sno", "name", "phone"].forEach(i => $(i).value = ""); $("paid").value = 0; init(); })
+  .catch(e => showMsg(e.message, "err"));
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Check-out</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner">
+<a class="brand" href="index.html">Farheen Hostel Management</a>
+<nav><a href="index.html">Home</a><a href="list.html">Residents</a><a href="rooms.html">Rooms</a><a href="listOne.html">Find Resident</a><a href="insert.html">Insert Resident</a><a href="update.html">Update Resident</a><a href="delete.html" class="active">Check-out</a></nav>
+</div></header>
+<main class="page">
+<div class="page-head">
+<div>
+<h1>Check-out</h1>
+<p>Select the resident who is leaving. Their record is removed and the bed becomes vacant.</p>
+</div>
+<img src="images/delete.svg" alt="">
+</div>
+<div class="card">
+<div id="msg" class="msg"></div>
+<div class="field"><label for="sno">Resident to check out</label>
+<select id="sno" onchange="showPreview()"></select></div>
+<div id="preview" class="preview"></div>
+<div class="actions"><button class="danger" onclick="checkOut()">Check out</button>
+<button class="secondary" onclick="location.href='index.html'">Home page</button></div>
+</div>
+</main>
+<footer>Farheen Hostel Management System</footer>
+<script src="hostel.js"></script>
+<script>
+let residents = [], fee = 0;
+load();
+
+function load(){
+  Promise.all([api.config(), api.residents()]).then(([c, r]) => {
+    fee = c.fee; residents = r; fillResidents(document.getElementById("sno"), r); showPreview();
+  }).catch(() => showMsg("Could not load residents.", "err"));
+}
+
+function showPreview(){
+  const id = document.getElementById("sno").value, box = document.getElementById("preview");
+  const s = residents.find(x => String(x.resident_id) === String(id));
+  if (!s){ box.style.display = "none"; return; }
+  const due = fee - s.fee_paid;
+  box.innerHTML = `<strong>${esc(s.resident_name)}</strong><br>ID: ${esc(s.resident_id)} &nbsp;|&nbsp; Room: ${esc(s.room_no)} &nbsp;|&nbsp; Fee pending: ${money(due)}`;
+  box.style.display = "block";
+}
+
+function checkOut(){
+  const id = document.getElementById("sno").value;
+  if (!id){ showMsg("Please select a resident first.", "err"); return; }
+  const s = residents.find(x => String(x.resident_id) === String(id));
+  const warn = s && fee - s.fee_paid > 0 ? "\n\nNote: " + money(fee - s.fee_paid) + " of fee is still pending." : "";
+  if (!confirm("Check out " + (s ? s.resident_name : "this resident") + "?" + warn)) return;
+  fetch("/residents/" + encodeURIComponent(id), {method: "DELETE"})
+  .then(checkOk).then(m => { showMsg(m, "ok"); load(); }).catch(e => showMsg(e.message, "err"));
+}
+</script>
+</body>
+</html>
