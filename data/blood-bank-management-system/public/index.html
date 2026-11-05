@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LifeLine | Blood Bank Management</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#"><span class="brand-mark">+</span> LifeLine <small>Blood Bank</small></a>
+    <nav><a href="#dashboard">Dashboard</a><a href="#donors">Donors</a><a href="#requests">Requests</a><a href="#inventory">Inventory</a></nav>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">BLOOD BANK MANAGEMENT SYSTEM</p>
+        <h1>Every drop can<br><span>make a difference.</span></h1>
+        <p class="hero-copy">Manage donor records, blood requests and stock from one simple dashboard.</p>
+        <a class="primary-link" href="#donors">Register a donor <span>→</span></a>
+      </div>
+      <div class="hero-art" aria-hidden="true"><div class="drop">+</div><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div></div>
+    </section>
+
+    <section id="dashboard" class="section">
+      <div class="section-heading"><div><p class="eyebrow">OVERVIEW</p><h2>Dashboard</h2></div><button class="secondary-btn" id="refreshBtn">↻ Refresh</button></div>
+      <div class="stats">
+        <article class="stat-card"><span class="stat-icon">♙</span><p>Total donors</p><strong id="donorTotal">—</strong></article>
+        <article class="stat-card"><span class="stat-icon">♥</span><p>Pending requests</p><strong id="pendingTotal">—</strong></article>
+        <article class="stat-card"><span class="stat-icon">▣</span><p>Total blood units</p><strong id="unitTotal">—</strong></article>
+      </div>
+    </section>
+
+    <section id="donors" class="section">
+      <div class="section-heading"><div><p class="eyebrow">COMMUNITY</p><h2>Donor registration</h2></div></div>
+      <div class="panel">
+        <form id="donorForm" class="form-grid">
+          <label>Full name<input name="full_name" required maxlength="100" placeholder="Enter donor name"></label>
+          <label>Age<input name="age" type="number" min="18" max="65" required placeholder="Age"></label>
+          <label>Phone number<input name="phone" required maxlength="20" placeholder="Contact number"></label>
+          <label>Blood group<select name="blood_group" required><option value="">Select group</option></select></label>
+          <label class="full">City<input name="city" required maxlength="100" placeholder="Enter city"></label>
+          <button class="primary-btn full" type="submit">Register donor</button>
+        </form>
+        <p class="form-note">This is a student demo. Donor eligibility must be determined by qualified medical staff.</p>
+      </div>
+      <div class="table-wrap"><table><thead><tr><th>Name</th><th>Age</th><th>Blood group</th><th>Phone</th><th>City</th></tr></thead><tbody id="donorRows"><tr><td colspan="5">Loading donors…</td></tr></tbody></table></div>
+    </section>
+
+    <section id="requests" class="section">
+      <div class="section-heading"><div><p class="eyebrow">HOSPITALS & PATIENTS</p><h2>Blood requests</h2></div></div>
+      <div class="panel">
+        <form id="requestForm" class="form-grid">
+          <label>Patient name<input name="patient_name" required maxlength="100" placeholder="Patient name"></label>
+          <label>Hospital name<input name="hospital" required maxlength="150" placeholder="Hospital"></label>
+          <label>Blood group<select name="blood_group" required><option value="">Select group</option></select></label>
+          <label>Units required<input name="units" type="number" min="1" max="50" required placeholder="Number of units"></label>
+          <label class="full">Contact number<input name="contact" required maxlength="20" placeholder="Contact number"></label>
+          <button class="primary-btn full" type="submit">Submit blood request</button>
+        </form>
+      </div>
+      <div class="table-wrap"><table><thead><tr><th>Patient</th><th>Hospital</th><th>Group</th><th>Units</th><th>Contact</th><th>Status</th><th>Update</th></tr></thead><tbody id="requestRows"><tr><td colspan="7">Loading requests…</td></tr></tbody></table></div>
+    </section>
+
+    <section id="inventory" class="section">
+      <div class="section-heading"><div><p class="eyebrow">AVAILABILITY</p><h2>Blood inventory</h2></div></div>
+      <div class="inventory-layout">
+        <div class="inventory-grid" id="stockGrid"></div>
+        <div class="panel stock-panel">
+          <h3>Update stock</h3>
+          <form id="stockForm">
+            <label>Blood group<select name="blood_group" required></select></label>
+            <label>Units<input name="units" type="number" min="1" max="500" required placeholder="Number of units"></label>
+            <label>Operation<select name="operation"><option value="add">Add units</option><option value="remove">Remove units</option></select></label>
+            <button class="primary-btn" type="submit">Update inventory</button>
+          </form>
+          <p class="form-note">Only authorized blood-bank staff should update real inventory records.</p>
+        </div>
+      </div>
+      <p class="disclaimer">Important: This application is an educational record-management demo, not a clinical decision tool. Blood type compatibility, donor eligibility, testing, storage and release must be verified by qualified blood-bank professionals.</p>
+    </section>
+    <footer>LifeLine Blood Bank Management System <span>Student project · Node.js + MySQL</span></footer>
+  </main>
+  <div id="toast" role="status" class="toast"></div>
+  <script src="app.js"></script>
+</body>
+</html>
